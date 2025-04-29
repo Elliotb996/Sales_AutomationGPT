@@ -38,7 +38,7 @@ def run_compliance_check(transcript):
     {transcript}
     """
     response = client.chat.completions.create(
-        model="gpt-4-turbo",
+        model="gpt-3.5-turbo",
         messages=[{"role": "system", "content": prompt}],
         max_tokens=300
     )
@@ -54,7 +54,7 @@ def run_sales_coaching(transcript):
     {transcript}
     """
     response = client.chat.completions.create(
-        model="gpt-4-turbo",
+        model="gpt-3.5-turbo",
         messages=[{"role": "system", "content": prompt}],
         max_tokens=300
     )
@@ -80,35 +80,37 @@ if st.button("Run Analysis"):
         st.error("Please provide both your OpenAI API Key and a transcript.")
     else:
         with st.spinner("Analyzing call..."):
-            compliance_result = run_compliance_check(transcript)
-            sales_result = run_sales_coaching(transcript)
-            crm_data = extract_crm_data(transcript)
-            lender_recommendation = recommend_lender(transcript)
+            st.session_state['compliance_result'] = run_compliance_check(transcript)
+            st.session_state['sales_result'] = run_sales_coaching(transcript)
+            st.session_state['crm_data'] = extract_crm_data(transcript)
+            st.session_state['lender_recommendation'] = recommend_lender(transcript)
 
-            st.subheader("Compliance Review")
-            st.success(compliance_result)
+# ---- DISPLAY RESULTS ----
+if 'compliance_result' in st.session_state:
+    st.subheader("Compliance Review")
+    st.success(st.session_state['compliance_result'])
 
-            st.subheader("Sales Coaching")
-            st.info(sales_result)
+    st.subheader("Sales Coaching")
+    st.info(st.session_state['sales_result'])
 
-            st.subheader("CRM Data Extracted")
-            st.write(pd.DataFrame([crm_data]))
+    st.subheader("CRM Data Extracted")
+    st.write(pd.DataFrame([st.session_state['crm_data']]))
 
-            st.subheader("Lender Recommendation")
-            st.warning(lender_recommendation)
+    st.subheader("Lender Recommendation")
+    st.warning(st.session_state['lender_recommendation'])
 
-            if st.button("Download PDF Report"):
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_font("Arial", size=12)
-                pdf.cell(200, 10, txt="Broker Buddy - Call Report", ln=True, align='C')
-                pdf.cell(200, 10, txt=f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=True, align='C')
-                pdf.ln(10)
-                report_text = (
-                    f"Compliance Review:\n{compliance_result}\n\n"
-                    f"Sales Coaching:\n{sales_result}\n\n"
-                    f"Lender Recommendation:\n{lender_recommendation}"
-                )
-                pdf.multi_cell(0, 10, report_text)
-                pdf.output("Broker_Buddy_Report.pdf")
-                st.success("PDF Report Generated! Check your app folder.")
+    if st.button("Download PDF Report"):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, txt="Broker Buddy - Call Report", ln=True, align='C')
+        pdf.cell(200, 10, txt=f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=True, align='C')
+        pdf.ln(10)
+        report_text = (
+            f"Compliance Review:\n{st.session_state['compliance_result']}\n\n"
+            f"Sales Coaching:\n{st.session_state['sales_result']}\n\n"
+            f"Lender Recommendation:\n{st.session_state['lender_recommendation']}"
+        )
+        pdf.multi_cell(0, 10, report_text)
+        pdf.output("Broker_Buddy_Report.pdf")
+        st.success("PDF Report Generated! Check your app folder.")
