@@ -104,10 +104,11 @@ if st.button("Run Analysis"):
                 pdf.cell(200, 10, txt="Broker Buddy - Call Report", ln=True, align='C')
                 pdf.cell(200, 10, txt=f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=True, align='C')
                 pdf.ln(10)
-                pdf.multi_cell(0, 10, f"{compliance_result}
-
-{sales_result}
-
-Lender: {lender_recommendation}")
+                report_text = (
+                    f"Compliance Review:\n{compliance_result}\n\n"
+                    f"Sales Coaching:\n{sales_result}\n\n"
+                    f"Lender Recommendation:\n{lender_recommendation}"
+                )
+                pdf.multi_cell(0, 10, report_text)
                 pdf.output("Broker_Buddy_Report.pdf")
                 st.success("PDF Report Generated! Check your app folder.")
