@@ -24,6 +24,42 @@ transcript = st.text_area("Paste Call Transcript Here:", height=300)
 
 # ---- AI PROCESSING FUNCTIONS ----
 
+def extract_mileage_data(transcript):
+    prompt = f"""
+    From the following motor finance broker transcript, extract:
+    - The annual mileage stated by the customer
+    - The annual mileage included in the product/quote provided by the broker
+
+    Transcript:
+    {transcript}
+
+    Format your response as:
+    Customer Mileage: XXXX
+    Product Mileage: XXXX
+    """
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "system", "content": prompt}],
+        max_tokens=150
+    )
+    content = response.choices[0].message.content
+    declared_mileage = None
+    product_mileage = None
+
+    for line in content.split("\n"):
+        if "Customer Mileage" in line:
+            declared_mileage = line.split(":")[1].strip()
+        elif "Product Mileage" in line:
+            product_mileage = line.split(":")[1].strip()
+
+    mileage_flagged = declared_mileage != product_mileage
+
+    return {
+        "Annual Mileage (Stated)": declared_mileage or "Not found",
+        "Annual Mileage (Product)": product_mileage or "Not found",
+        "Mileage Mismatch": "❌ Mismatch detected" if mileage_flagged else "✅ Match"
+    }, mileage_flagged
+
 def run_compliance_check(transcript, mileage_flagged):
     prompt = f"""
     You are a UK financial compliance officer. Review this transcript for:
@@ -31,14 +67,14 @@ def run_compliance_check(transcript, mileage_flagged):
     2. Vulnerability checks.
     3. Correct product explanation (PCP, HP, etc).
     4. Fraud red flags.
-    5. Mileage suitability – was customer's declared annual mileage reflected in product offer?
+    5. Mileage suitability.
 
-    Return each item rated as Green, Amber, or Red. Include specific examples and flag if the product doesn't match the stated use.
+    Highlight any mismatch between customer mileage and quoted product mileage.
 
     Transcript:
     {transcript}
 
-    Note: Mileage mismatch was {'detected' if mileage_flagged else 'not detected'}.
+    Mileage mismatch was {'detected' if mileage_flagged else 'not detected'}.
     """
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
@@ -63,21 +99,6 @@ def run_sales_coaching(transcript):
     )
     return response.choices[0].message.content
 
-def extract_crm_data(transcript):
-    # Very basic logic to simulate transcript parsing for mileage
-    declared_mileage = "12,000"
-    selected_product_mileage = "10,000"
-    mileage_flagged = declared_mileage != selected_product_mileage
-
-    return {
-        "Deposit": "£3,500",
-        "Term": "48 months",
-        "Annual Mileage (Stated)": declared_mileage,
-        "Annual Mileage (Product)": selected_product_mileage,
-        "Budget": "£300/month",
-        "Mileage Mismatch": "❌ Mismatch detected" if mileage_flagged else "✅ Match"
-    }, mileage_flagged
-
 def recommend_lender(transcript):
     if "business owner" in transcript.lower() or "limited company" in transcript.lower():
         return "Suggested Lender: Aldermore - Meets business lending criteria."
@@ -90,7 +111,7 @@ if st.button("Run Analysis"):
         st.error("Please provide both your OpenAI API Key and a transcript.")
     else:
         with st.spinner("Analyzing call..."):
-            crm_data, mileage_flagged = extract_crm_data(transcript)
+            crm_data, mileage_flagged = extract_mileage_data(transcript)
             st.session_state['crm_data'] = crm_data
             st.session_state['mileage_flagged'] = mileage_flagged
             st.session_state['compliance_result'] = run_compliance_check(transcript, mileage_flagged)
