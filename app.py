@@ -54,8 +54,6 @@ def extract_mileage_data(transcript):
         "Term": "48 months",
         "Budget": "£300/month",
         "Annual Mileage (Stated)": declared_mileage or "Not found",
-        "Annual Mileage (Product)": product_mileage or "Not found",
-        "Mileage Mismatch": "❌ Mismatch detected" if mileage_flagged else "✅ Match"
     }
 
     return crm_data, mileage_flagged
