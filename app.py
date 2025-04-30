@@ -5,14 +5,13 @@ import streamlit as st
 import pandas as pd
 from openai import OpenAI
 import tempfile
+import os
+
 
 st.set_page_config(page_title="Broker Buddy Demo", layout="centered")
 st.title("📞 Broker Buddy - Sales Call Analyzer (Demo)")
 
 st.markdown("Upload a call audio file **or** paste a transcript below. We'll review the call and generate a CRM-style summary, highlight any red flags, and send a sample report to your email.")
-
-import os
-from openai import OpenAI
 
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
