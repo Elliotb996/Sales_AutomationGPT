@@ -11,7 +11,12 @@ st.title("📞 Broker Buddy - Sales Call Analyzer (Demo)")
 
 st.markdown("Upload a call audio file **or** paste a transcript below. We'll review the call and generate a CRM-style summary, highlight any red flags, and send a sample report to your email.")
 
-api_key = st.text_input("🔐 Enter OpenAI API Key", type="password")
+import os
+from openai import OpenAI
+
+api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key)
+
 email = st.text_input("📧 Your Email Address (to receive demo report)")
 
 option = st.radio("Choose input method:", ["Upload Audio File (MP3/MP4)", "Paste Transcript"])
